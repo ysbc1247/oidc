@@ -1,5 +1,9 @@
 package com.projects.oidc.service;
 
+import com.projects.oidc.entity.Prompt;
+import com.projects.oidc.entity.User;
+import com.projects.oidc.repository.PromptRepository;
+import com.projects.oidc.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
@@ -9,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import javax.transaction.Transactional;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,18 +23,18 @@ import java.util.Map;
 @Service
 
 public class PromptService {
+    private final PromptRepository promptRepository;
+    private final UserRepository userRepository;
     private RestTemplate restTemplate;
 
-    public PromptService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
 
     public String googleSearch(String query) {
         ResponseEntity<String> response = restTemplate.getForEntity("http://localhost:5000/googlesearch/" + query, String.class);
         return response.getBody();
     }
 
-    public String generateText(String apiKey, String prompt) {
+    public String generateText(User user, String prompt) {
+        String apiKey = user.getApiKey();
         Map<String, String> body = new HashMap<>();
         body.put("apikey", apiKey);
         body.put("prompt", prompt);
@@ -41,7 +46,12 @@ public class PromptService {
                 HttpMethod.POST,
                 requestEntity,
                 String.class);
-
+        Prompt newPrompt = new Prompt();
+        newPrompt.setRequest(prompt);
+        newPrompt.setResponse(response.getBody());
+        newPrompt.setUser(user);
+        newPrompt.setCreatedAt(new Date());
+        promptRepository.save(newPrompt);
         return response.getBody();
     }
 }
