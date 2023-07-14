@@ -1,2 +1,4 @@
-package com.projects.oidc.service;public class TagService {
+package com.projects.oidc.service;
+
+public class TagService {
 }
